@@ -805,7 +805,8 @@ def render_beredskap_tab() -> None:
     if filter_year:
         filtered = [c for c in filtered if c.get("ar") == filter_year]
     if filter_month != "All":
-        filtered = [c for c in filtered if c.get("manad") == filter_month]
+        month_num = MONTHS.index(filter_month)
+        filtered = [c for c in filtered if c.get("datum") and int(str(c.get("datum"))[5:7]) == month_num]
 
     # ── Metrics ───────────────────────────────────────────────────────────────
     total_mins = sum(c.get("tidsatgang_minutes") or 0 for c in filtered)
@@ -1019,7 +1020,7 @@ def render_larm_tab() -> None:
         st.markdown("### Filter")
         filter_person = st.selectbox("Person", ["All"] + member_names, key="l_person")
         current_year = date.today().year
-        filter_year = st.selectbox("Year", list(range(current_year, 2024, -1)), key="l_year")
+        filter_year = st.selectbox("Year", list(range(current_year, 2021, -1)), key="l_year")
         filter_atgard = st.selectbox("Action taken", ["All", "Yes", "No"], key="l_atgard")
         filter_uppfoljning = st.checkbox("Show only with follow-up", key="l_uppf")
 
