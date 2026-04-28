@@ -868,7 +868,22 @@ def render_beredskap_tab() -> None:
                 lambda x: mins_to_hhmm(int(x)) if pd.notna(x) and x else "0:00"
             )
         df_show.rename(columns=display_cols, inplace=True)
-        st.dataframe(df_show, use_container_width=True, hide_index=True, height=min(400, 38 + len(df_show) * 35))
+        st.dataframe(
+            df_show,
+            use_container_width=True,
+            hide_index=True,
+            height=min(700, 38 + len(df_show) * 35),
+            column_config={
+                "Description": st.column_config.TextColumn(width="large"),
+                "Comment":     st.column_config.TextColumn(width="large"),
+                "Improvement": st.column_config.TextColumn(width="medium"),
+                "Date":        st.column_config.TextColumn(width="small"),
+                "Duration":    st.column_config.TextColumn(width="small"),
+                "Category":    st.column_config.TextColumn(width="small"),
+                "Time":        st.column_config.TextColumn(width="small"),
+                "Time resolved": st.column_config.TextColumn(width="small"),
+            },
+        )
 
         # Detail view
         with st.expander("View details"):
@@ -1088,7 +1103,22 @@ def render_larm_tab() -> None:
         if "datum" in df_show.columns:
             df_show["datum"] = df_show["datum"].apply(lambda x: format_date(str(x)) if pd.notna(x) else "")
         df_show.rename(columns=display_cols, inplace=True)
-        st.dataframe(df_show, use_container_width=True, hide_index=True, height=min(400, 38 + len(df_show) * 35))
+        st.dataframe(
+            df_show,
+            use_container_width=True,
+            hide_index=True,
+            height=min(700, 38 + len(df_show) * 35),
+            column_config={
+                "Description": st.column_config.TextColumn(width="large"),
+                "Comment":     st.column_config.TextColumn(width="large"),
+                "Follow-up":   st.column_config.TextColumn(width="large"),
+                "Date":        st.column_config.TextColumn(width="small"),
+                "Time":        st.column_config.TextColumn(width="small"),
+                "Action taken":  st.column_config.TextColumn(width="small"),
+                "Recovery":      st.column_config.TextColumn(width="small"),
+                "Alert instr.":  st.column_config.TextColumn(width="small"),
+            },
+        )
 
         # Detail view larm
         with st.expander("View details"):
