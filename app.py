@@ -868,7 +868,7 @@ def render_beredskap_tab() -> None:
                 lambda x: mins_to_hhmm(int(x)) if pd.notna(x) and x else "0:00"
             )
         df_show.rename(columns=display_cols, inplace=True)
-        st.dataframe(df_show, use_container_width=True, hide_index=True)
+        st.dataframe(df_show, use_container_width=True, hide_index=True, height=min(400, 38 + len(df_show) * 35))
 
         # Detail view
         with st.expander("View details"):
@@ -1088,7 +1088,7 @@ def render_larm_tab() -> None:
         if "datum" in df_show.columns:
             df_show["datum"] = df_show["datum"].apply(lambda x: format_date(str(x)) if pd.notna(x) else "")
         df_show.rename(columns=display_cols, inplace=True)
-        st.dataframe(df_show, use_container_width=True, hide_index=True)
+        st.dataframe(df_show, use_container_width=True, hide_index=True, height=min(400, 38 + len(df_show) * 35))
 
         # Detail view larm
         with st.expander("View details"):
