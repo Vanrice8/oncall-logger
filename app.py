@@ -82,20 +82,28 @@ def supabase_request(
         raise RuntimeError(f"Supabase {exc.code}: {detail}") from exc
 
 
+def _fetch_all(table: str, order: str) -> list:
+    rows, offset, page = [], 0, 500
+    while True:
+        batch = supabase_request(
+            "GET", table,
+            params={"order": order, "limit": str(page), "offset": str(offset)},
+        ) or []
+        rows.extend(batch)
+        if len(batch) < page:
+            break
+        offset += page
+    return rows
+
+
 @st.cache_data(ttl=60)
 def _sb_calls() -> list:
-    return supabase_request(
-        "GET", "oncall_calls",
-        params={"order": "datum.desc,tid.desc", "limit": "10000"},
-    ) or []
+    return _fetch_all("oncall_calls", "datum.desc,tid.desc")
 
 
 @st.cache_data(ttl=60)
 def _sb_larm() -> list:
-    return supabase_request(
-        "GET", "oncall_larm",
-        params={"order": "datum.desc,tid.desc", "limit": "10000"},
-    ) or []
+    return _fetch_all("oncall_larm", "datum.desc,tid.desc")
 
 
 @st.cache_data(ttl=60)
@@ -1277,7 +1285,7 @@ def main() -> None:
         if st.button("Log out", use_container_width=True):
             st.session_state.authenticated = False
             st.rerun()
-        comp_url = get_setting("COMP_URL", "http://localhost:8501")
+        comp_url = get_setting("COMP_URL", "https://4ig74m8abezhu4ighxtxwe.streamlit.app/")
         st.link_button("Open Comp Portal", comp_url, use_container_width=True)
         st.divider()
 
