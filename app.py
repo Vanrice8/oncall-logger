@@ -692,9 +692,14 @@ def render_beredskap_tab() -> None:
             list(range(current_year, 2021, -1)),
             key="b_year",
         )
-        filter_week = st.number_input(
-            "Week (0 = all)", min_value=0, max_value=53,
-            value=current_week, key="b_week",
+        MONTHS = ["All", "January", "February", "March", "April", "May", "June",
+                  "July", "August", "September", "October", "November", "December"]
+        current_month_name = date.today().strftime("%B")
+        filter_month = st.selectbox(
+            "Month",
+            MONTHS,
+            index=MONTHS.index(current_month_name),
+            key="b_month",
         )
 
         st.divider()
@@ -766,8 +771,8 @@ def render_beredskap_tab() -> None:
         filtered = [c for c in filtered if c.get("chef") == filter_person]
     if filter_year:
         filtered = [c for c in filtered if c.get("ar") == filter_year]
-    if filter_week:
-        filtered = [c for c in filtered if c.get("vecka") == filter_week]
+    if filter_month != "All":
+        filtered = [c for c in filtered if c.get("manad") == filter_month]
 
     # ── Metrics ───────────────────────────────────────────────────────────────
     total_mins = sum(c.get("tidsatgang_minutes") or 0 for c in filtered)
@@ -785,7 +790,7 @@ def render_beredskap_tab() -> None:
         with st.form("add_call_form", clear_on_submit=True):
             fc1, fc2 = st.columns(2)
             with fc1:
-                default_chef_idx = member_names.index(filter_person) if filter_person != "Alla" and filter_person in member_names else 0
+                default_chef_idx = member_names.index(filter_person) if filter_person != "All" and filter_person in member_names else 0
                 chef = st.selectbox("Chef / IM", member_names or ["—"], index=default_chef_idx, key="f_chef")
                 kategori = st.selectbox("Category", KATEGORIER, key="f_kat")
                 datum_val = st.date_input("Date", value=date.today(), key="f_datum")
@@ -831,9 +836,9 @@ def render_beredskap_tab() -> None:
 
     # ── Call log table ────────────────────────────────────────────────────────
     st.markdown('<div class="kt-card">', unsafe_allow_html=True)
-    week_label = f"w.{filter_week} {filter_year}" if filter_week else f"all weeks {filter_year}"
+    month_label = filter_month if filter_month != "All" else "all months"
     person_label = filter_person if filter_person != "All" else "all"
-    st.markdown(f'<div class="kt-card-label">Call log — {person_label}, {week_label}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="kt-card-label">Call log — {person_label}, {month_label} {filter_year}</div>', unsafe_allow_html=True)
 
     if not filtered:
         st.info("No calls for the selected filter.")
