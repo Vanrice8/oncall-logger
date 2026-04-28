@@ -605,10 +605,38 @@ def inject_css() -> None:
         }}
         .stDataFrame {{ border-radius: 12px; overflow: hidden; }}
         * {{ scrollbar-width: thick; scrollbar-color: #4a5568 #1e2433; }}
-        ::-webkit-scrollbar {{ width: 12px; height: 12px; }}
+        ::-webkit-scrollbar {{ width: 14px; height: 14px; }}
         ::-webkit-scrollbar-track {{ background: #1e2433; border-radius: 6px; }}
         ::-webkit-scrollbar-thumb {{ background: #4a5568; border-radius: 6px; border: 2px solid #1e2433; }}
         ::-webkit-scrollbar-thumb:hover {{ background: #6b7280; }}
+        </style>
+        <script>
+        (function() {{
+          const SCROLL_CSS = `
+            ::-webkit-scrollbar {{ width: 14px !important; height: 14px !important; }}
+            ::-webkit-scrollbar-track {{ background: #1e2433; border-radius: 6px; }}
+            ::-webkit-scrollbar-thumb {{ background: #4a5568 !important; border-radius: 6px; border: 2px solid #1e2433; min-height: 40px; min-width: 40px; }}
+            ::-webkit-scrollbar-thumb:hover {{ background: #6b7280 !important; }}
+            * {{ scrollbar-width: thick; scrollbar-color: #4a5568 #1e2433; }}
+          `;
+          function injectIntoFrame(frame) {{
+            try {{
+              const doc = frame.contentDocument;
+              if (!doc || doc.querySelector('#kt-scroll-style')) return;
+              const s = doc.createElement('style');
+              s.id = 'kt-scroll-style';
+              s.textContent = SCROLL_CSS;
+              (doc.head || doc.documentElement).appendChild(s);
+            }} catch(e) {{}}
+          }}
+          function injectAll() {{
+            document.querySelectorAll('iframe').forEach(injectIntoFrame);
+          }}
+          injectAll();
+          new MutationObserver(injectAll).observe(document.body, {{ childList: true, subtree: true }});
+        }})();
+        </script>
+        <style>
         .kt-transfer-card {{
             background: linear-gradient(135deg, #0f2748 0%, #1d3f6f 100%);
             border: 1px solid var(--kt-primary);
