@@ -1278,6 +1278,43 @@ def render_larm_tab() -> None:
     st.markdown('</div>', unsafe_allow_html=True)
 
 
+# ── Members tab ───────────────────────────────────────────────────────────────
+
+def render_members_tab() -> None:
+    members = load_members()
+    member_names = [m["name"] for m in members]
+
+    st.markdown('<div class="kt-card">', unsafe_allow_html=True)
+    st.markdown('<div class="kt-card-label">Add member</div>', unsafe_allow_html=True)
+    new_name = st.text_input("Name", placeholder="Full name", key="new_member_name")
+    if st.button("Add member", use_container_width=True, key="add_member_btn"):
+        if not new_name.strip():
+            st.warning("Enter a name.")
+        elif new_name.strip() in member_names:
+            st.warning("Already exists.")
+        else:
+            add_member(new_name.strip())
+            st.success(f"{new_name.strip()} added!")
+            st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="kt-card">', unsafe_allow_html=True)
+    st.markdown('<div class="kt-card-label">Current members</div>', unsafe_allow_html=True)
+    if not members:
+        st.info("No members yet.")
+    else:
+        for m in members:
+            col1, col2 = st.columns([4, 1])
+            with col1:
+                st.markdown(f"**{m['name']}**")
+            with col2:
+                if st.button("Remove", key=f"rm_{m['id']}"):
+                    archive_member(m["id"])
+                    st.success(f"{m['name']} removed!")
+                    st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main() -> None:
@@ -1309,40 +1346,21 @@ def main() -> None:
         st.link_button("Open Comp Portal", comp_url, use_container_width=True)
         st.divider()
 
-        st.markdown("### Members")
-        _members_all = load_members()
-        _member_names_all = [m["name"] for m in _members_all]
-
-        new_name = st.text_input("Add member", placeholder="Full name", key="new_member_name")
-        if st.button("Add", use_container_width=True, key="add_member_btn"):
-            if new_name.strip() and new_name.strip() not in _member_names_all:
-                add_member(new_name.strip())
-                st.success(f"{new_name.strip()} added!")
-                st.rerun()
-            elif new_name.strip() in _member_names_all:
-                st.warning("Already exists.")
-
-        if _member_names_all:
-            remove_sel = st.selectbox("Remove member", _member_names_all, key="remove_member_sel")
-            if st.button("Remove", use_container_width=True, key="remove_member_btn"):
-                member_id = next((m["id"] for m in _members_all if m["name"] == remove_sel), None)
-                if member_id:
-                    archive_member(member_id)
-                    st.success(f"{remove_sel} removed!")
-                    st.rerun()
         st.divider()
 
     tab = st.segmented_control(
         "Navigation",
-        ["📞 Beredskap", "🚨 Larm"],
+        ["📞 Beredskap", "🚨 Larm", "👥 Members"],
         default="📞 Beredskap",
         key="main_tab",
     )
 
     if tab == "📞 Beredskap":
         render_beredskap_tab()
-    else:
+    elif tab == "🚨 Larm":
         render_larm_tab()
+    else:
+        render_members_tab()
 
 
 main()
