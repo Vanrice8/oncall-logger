@@ -221,6 +221,23 @@ def archive_member(member_id: int) -> None:
     invalidate_cache()
 
 
+def restore_member(member_id: int) -> None:
+    if using_supabase():
+        supabase_request("PATCH", f"members?id=eq.{member_id}", body={"is_archived": False}, prefer="return=minimal")
+    else:
+        conn = sqlite_conn()
+        conn.execute("UPDATE members SET is_archived=0 WHERE id=?", (member_id,))
+        conn.commit()
+    invalidate_cache()
+
+
+def load_all_members() -> list[dict]:
+    if using_supabase():
+        return supabase_request("GET", "members", params={"order": "name.asc"}) or []
+    conn = sqlite_conn()
+    return [dict(r) for r in conn.execute("SELECT * FROM members ORDER BY name").fetchall()]
+
+
 def load_calls() -> list[dict]:
     if using_supabase():
         return _sb_calls()
@@ -488,12 +505,32 @@ def inject_css() -> None:
             border-right: none;
         }}
         [data-testid="stSidebar"] * {{ color: #f8fafc; }}
+        [data-testid="stSidebar"] > div:first-child {{ padding-top: 1rem !important; }}
         [data-testid="stSidebar"] .stButton button {{
-            background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.14);
-            color: #fff;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #e2e8f0;
             border-radius: 10px;
-            font-weight: 600;
+            font-weight: 500;
+            transition: all 0.15s ease;
+        }}
+        [data-testid="stSidebar"] .stButton button:hover {{
+            background: rgba(255,255,255,0.14);
+            border-color: rgba(255,255,255,0.3);
+            color: #fff;
+        }}
+        [data-testid="stSidebar"] .stLinkButton a {{
+            background: var(--kt-primary) !important;
+            border: none !important;
+            color: #fff !important;
+            border-radius: 10px !important;
+            font-weight: 600 !important;
+            text-align: center !important;
+            transition: all 0.15s ease !important;
+        }}
+        [data-testid="stSidebar"] .stLinkButton a:hover {{
+            background: var(--kt-primary-dark) !important;
+            color: #fff !important;
         }}
         .block-container {{
             max-width: 1200px;
@@ -1281,38 +1318,54 @@ def render_larm_tab() -> None:
 # ── Members tab ───────────────────────────────────────────────────────────────
 
 def render_members_tab() -> None:
-    members = load_members()
-    member_names = [m["name"] for m in members]
+    all_members = load_all_members()
+    active = [m for m in all_members if not m.get("is_archived")]
+    archived = [m for m in all_members if m.get("is_archived")]
+    active_names = [m["name"] for m in active]
+
+    with st.container():
+        st.markdown('<div class="kt-card-label">Add member</div>', unsafe_allow_html=True)
+        c1, c2 = st.columns([4, 1])
+        with c1:
+            new_name = st.text_input("Name", placeholder="Full name", key="new_member_name", label_visibility="collapsed")
+        with c2:
+            if st.button("Add", use_container_width=True, key="add_member_btn"):
+                if not new_name.strip():
+                    st.warning("Enter a name.")
+                elif new_name.strip() in active_names:
+                    st.warning("Already exists.")
+                else:
+                    add_member(new_name.strip())
+                    st.success(f"{new_name.strip()} added!")
+                    st.rerun()
 
     st.markdown('<div class="kt-card">', unsafe_allow_html=True)
-    st.markdown('<div class="kt-card-label">Add member</div>', unsafe_allow_html=True)
-    new_name = st.text_input("Name", placeholder="Full name", key="new_member_name")
-    if st.button("Add member", use_container_width=True, key="add_member_btn"):
-        if not new_name.strip():
-            st.warning("Enter a name.")
-        elif new_name.strip() in member_names:
-            st.warning("Already exists.")
-        else:
-            add_member(new_name.strip())
-            st.success(f"{new_name.strip()} added!")
-            st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('<div class="kt-card">', unsafe_allow_html=True)
-    st.markdown('<div class="kt-card-label">Current members</div>', unsafe_allow_html=True)
-    if not members:
-        st.info("No members yet.")
+    st.markdown('<div class="kt-card-label">Active members</div>', unsafe_allow_html=True)
+    if not active:
+        st.info("No active members.")
     else:
-        for m in members:
+        for m in active:
             col1, col2 = st.columns([4, 1])
             with col1:
                 st.markdown(f"**{m['name']}**")
             with col2:
-                if st.button("Remove", key=f"rm_{m['id']}"):
+                if st.button("Archive", key=f"arch_{m['id']}"):
                     archive_member(m["id"])
-                    st.success(f"{m['name']} removed!")
                     st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
+
+    if archived:
+        st.markdown('<div class="kt-card">', unsafe_allow_html=True)
+        st.markdown('<div class="kt-card-label">Archived members</div>', unsafe_allow_html=True)
+        for m in archived:
+            col1, col2 = st.columns([4, 1])
+            with col1:
+                st.markdown(f"~~{m['name']}~~")
+            with col2:
+                if st.button("Restore", key=f"rest_{m['id']}"):
+                    restore_member(m["id"])
+                    st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
@@ -1344,8 +1397,6 @@ def main() -> None:
             st.rerun()
         comp_url = get_setting("COMP_URL", "https://4ig74m8abezhu4ighxtxwe.streamlit.app/")
         st.link_button("Open Comp Portal", comp_url, use_container_width=True)
-        st.divider()
-
         st.divider()
 
     tab = st.segmented_control(
