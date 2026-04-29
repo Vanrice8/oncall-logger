@@ -507,16 +507,16 @@ def inject_css() -> None:
         [data-testid="stSidebar"] * {{ color: #f8fafc; }}
         [data-testid="stSidebar"] > div:first-child {{ padding-top: 1rem !important; }}
         [data-testid="stSidebar"] .stButton button {{
-            background: rgba(255,255,255,0.07);
-            border: 1px solid rgba(255,255,255,0.15);
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.35);
             color: #e2e8f0;
             border-radius: 10px;
             font-weight: 500;
             transition: all 0.15s ease;
         }}
         [data-testid="stSidebar"] .stButton button:hover {{
-            background: rgba(255,255,255,0.14);
-            border-color: rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.55);
             color: #fff;
         }}
         [data-testid="stSidebar"] .stLinkButton a {{
@@ -801,19 +801,6 @@ def render_beredskap_tab() -> None:
         )
 
         st.divider()
-        st.markdown("### Download")
-        dl_person = st.selectbox("Person (export)", ["All"] + member_names, key="dl_b_person")
-        dl_calls = calls if dl_person == "All" else [c for c in calls if c.get("chef") == dl_person]
-        if st.download_button(
-            "Download On-Call Log (.xlsx)",
-            data=build_beredskap_excel(dl_calls),
-            file_name=f"Uppföljning beredskap{' - ' + dl_person if dl_person != 'Alla' else ''}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True,
-        ):
-            pass
-
-        st.divider()
         st.markdown("### Transfer to Comp")
         transfer_person = st.selectbox("Person", member_names, key="t_person") if member_names else None
 
@@ -829,7 +816,7 @@ def render_beredskap_tab() -> None:
         transfer_week = st.number_input("Week", min_value=1, max_value=53, value=current_week, key="t_week")
         st.caption(week_label(transfer_week, transfer_year))
 
-        DEDUCTION_MINS = 180  # 3 hours fixed deduction
+        DEDUCTION_MINS = 180
 
         if transfer_person:
             matching = [
@@ -862,6 +849,19 @@ def render_beredskap_tab() -> None:
                     st.success(f"Added {mins_to_hhmm(net_mins)} for {transfer_person} in Comp!")
                 except Exception as exc:
                     st.error(str(exc))
+
+        st.divider()
+        st.markdown("### Download")
+        dl_person = st.selectbox("Person (export)", ["All"] + member_names, key="dl_b_person")
+        dl_calls = calls if dl_person == "All" else [c for c in calls if c.get("chef") == dl_person]
+        if st.download_button(
+            "Download On-Call Log (.xlsx)",
+            data=build_beredskap_excel(dl_calls),
+            file_name=f"Uppföljning beredskap{' - ' + dl_person if dl_person != 'All' else ''}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            use_container_width=True,
+        ):
+            pass
 
     # ── Filter calls ──────────────────────────────────────────────────────────
     filtered = calls
