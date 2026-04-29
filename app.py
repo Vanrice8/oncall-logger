@@ -201,6 +201,26 @@ def load_members() -> list[dict]:
     ).fetchall()]
 
 
+def add_member(name: str) -> None:
+    if using_supabase():
+        supabase_request("POST", "members", body={"name": name, "is_archived": False}, prefer="return=minimal")
+    else:
+        conn = sqlite_conn()
+        conn.execute("INSERT INTO members (name) VALUES (?)", (name,))
+        conn.commit()
+    invalidate_cache()
+
+
+def archive_member(member_id: int) -> None:
+    if using_supabase():
+        supabase_request("PATCH", f"members?id=eq.{member_id}", body={"is_archived": True}, prefer="return=minimal")
+    else:
+        conn = sqlite_conn()
+        conn.execute("UPDATE members SET is_archived=1 WHERE id=?", (member_id,))
+        conn.commit()
+    invalidate_cache()
+
+
 def load_calls() -> list[dict]:
     if using_supabase():
         return _sb_calls()
@@ -1287,6 +1307,29 @@ def main() -> None:
             st.rerun()
         comp_url = get_setting("COMP_URL", "https://4ig74m8abezhu4ighxtxwe.streamlit.app/")
         st.link_button("Open Comp Portal", comp_url, use_container_width=True)
+        st.divider()
+
+        st.markdown("### Members")
+        _members_all = load_members()
+        _member_names_all = [m["name"] for m in _members_all]
+
+        new_name = st.text_input("Add member", placeholder="Full name", key="new_member_name")
+        if st.button("Add", use_container_width=True, key="add_member_btn"):
+            if new_name.strip() and new_name.strip() not in _member_names_all:
+                add_member(new_name.strip())
+                st.success(f"{new_name.strip()} added!")
+                st.rerun()
+            elif new_name.strip() in _member_names_all:
+                st.warning("Already exists.")
+
+        if _member_names_all:
+            remove_sel = st.selectbox("Remove member", _member_names_all, key="remove_member_sel")
+            if st.button("Remove", use_container_width=True, key="remove_member_btn"):
+                member_id = next((m["id"] for m in _members_all if m["name"] == remove_sel), None)
+                if member_id:
+                    archive_member(member_id)
+                    st.success(f"{remove_sel} removed!")
+                    st.rerun()
         st.divider()
 
     tab = st.segmented_control(
