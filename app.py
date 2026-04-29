@@ -508,15 +508,15 @@ def inject_css() -> None:
         [data-testid="stSidebar"] > div:first-child {{ padding-top: 1rem !important; }}
         [data-testid="stSidebar"] .stButton button {{
             background: transparent;
-            border: 1px solid rgba(255,255,255,0.35);
+            border: 2px solid var(--kt-primary);
             color: #e2e8f0;
             border-radius: 10px;
             font-weight: 500;
             transition: all 0.15s ease;
         }}
         [data-testid="stSidebar"] .stButton button:hover {{
-            background: rgba(255,255,255,0.08);
-            border-color: rgba(255,255,255,0.55);
+            background: rgba(59,130,246,0.15);
+            border-color: var(--kt-primary);
             color: #fff;
         }}
         [data-testid="stSidebar"] .stLinkButton a {{
