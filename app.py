@@ -507,17 +507,16 @@ def inject_css() -> None:
         [data-testid="stSidebar"] * {{ color: #f8fafc; }}
         [data-testid="stSidebar"] > div:first-child {{ padding-top: 1rem !important; }}
         [data-testid="stSidebar"] .stButton button {{
-            background: transparent;
-            border: 2px solid var(--kt-primary);
-            color: #e2e8f0;
-            border-radius: 10px;
-            font-weight: 500;
-            transition: all 0.15s ease;
+            background: var(--kt-primary) !important;
+            border: none !important;
+            color: #fff !important;
+            border-radius: 10px !important;
+            font-weight: 600 !important;
+            transition: all 0.15s ease !important;
         }}
         [data-testid="stSidebar"] .stButton button:hover {{
-            background: rgba(59,130,246,0.15);
-            border-color: var(--kt-primary);
-            color: #fff;
+            background: var(--kt-primary-dark) !important;
+            color: #fff !important;
         }}
         [data-testid="stSidebar"] .stLinkButton a {{
             background: var(--kt-primary) !important;
